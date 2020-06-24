@@ -1,10 +1,12 @@
 import React from 'react';
-import './App.css';
+import Navigation from '../Navigation/Navigation'
+import { AddTaskModal } from '../AddTaskModal'
 
 function App() {
   return (
     <div className="App">
-      Hi react
+      <Navigation />
+      <AddTaskModal />
     </div>
   );
 }
