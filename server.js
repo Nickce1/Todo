@@ -1,74 +1,82 @@
-const express = require('express')
-const mysql = require('mysql')
-const cors = require('cors')
+const express = require("express")
+const mysql = require("mysql")
+const cors = require("cors")
+const bodyParser = require("body-parser")
 
 const app = express()
 app.use(cors())
+app.use(bodyParser.json())
 
-const connection = mysql.createConnection ({
-  host: "localhost",
-  user: "root",
-  database: "todo",
-  password: "asdcxz1+"
+const con = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  database: 'todo',
+  password: 'asdcxz1+'
 })
 
-console.log("Connecting to the database...")
-console.log("--------------------------Begin------------------------")
-connection.connect(err => {
-  if (err) {
-    console.log("Error when connecting to the database: ")
-    console.log(err)
-    console.log("--------------------------End------------------------")
+console.log('--------------Connecting to the DB---------------')
+con.connect (error => {
+  if (error) {
+    console.log("Connection error: ")
+    console.log(error)
+    console.log('\n\n--------------Connecting to the DB---------------')
   }
-  else {
-    console.log("Connected to the database.")
-    console.log("--------------------------End------------------------")
-  }
+  else
+    console.log("Connection established !")
+    console.log('--------------Connected to the DB---------------')
 })
 
-const ALL_TASKS_QUERY = "SELECT * FROM TASK"
+const ALL_TASKS_QUERY = `SELECT * FROM task WHERE t_etat = 0`
 
-const QUERY_ALL = (res) => {
-  connection.query ( ALL_TASKS_QUERY, ( error, result ) => {
+const queryAllTasks = (res) => {
+  con.query(ALL_TASKS_QUERY, (error, result) => {
     if (error) {
-      console.log("------------All tasks query error------------");
-      console.log("Query all error : ");
-      res.send(error)
+      console.log('Error when querrying All Tasks')
+      console.log(error)
+    }
+    else res.json({
+      data: result
+    })
+  })
+}
+
+app.get('/', (req, res) => {
+  queryAllTasks(res);
+})
+
+app.post('/addTask', (req, res) => {
+  console.log('----------------QUERY INSERT-----------------')
+  console.log(req.body)
+  const INSERT_TASK_QUERY = `INSERT INTO TASK (t_name, t_etat) VALUES ('${req.body.t_name}', ${req.body.t_etat})`
+  con.query(INSERT_TASK_QUERY, (error) => {
+    if (error) {
+      console.log('----------------QUERY INSERT ERROR-----------------')
+      console.log(error)
+      console.log('----------------END QUERY INSERT ERROR-----------------')
     }
     else {
+      console.log('----------------TASK INSERTED SUCCESSFULLY-----------------')
+      queryAllTasks(res)
+    }
+  })
+})
+
+app.post('/search', (req, res) => {
+  const SEARCH_QUERY = `SELECT * FROM task WHERE t_name LIKE '%${req.body.search}%';`
+  console.log(SEARCH_QUERY)
+  con.query(SEARCH_QUERY, (error, result) => {
+    if (error) {
+      console.log('----------------SEARCH ERROR-----------------')
+      console.log(error)
+      console.log('----------------END SEARCH ERROR-----------------')
+    }
+    else {
+      console.log('----------------SEARCH QUERY COMPLETED-----------------')
       res.json({
         data: result
       })
     }
   })
-}
-
-app.get('/', (req, res) => {
-  QUERY_ALL(res)
 })
 
-// const name = "finish CRUD operations"
-// const state = false
-
-// const name = "Implement the back-end"
-// const state = true
-
-// connection.query ( `INSERT INTO task (t_name, t_etat) VALUES ( "${name}", ${state} );`)
-
-app.post('/insertTask', (req, res) => {
-  const insertQuery = `INSERT INTO task (t_name, t_etat) VALUES ("${req.t_name}", ${req.t_state})`
-  connection.query(insertQuery, (err, result) => {
-    if (err) {
-      console.log("------------InsertTask query error------------");
-      console.log("Insert query error : ");
-      res.send(error)
-    }
-    else {
-      QUERY_ALL(res)
-    }
-  })
-})
-
-app.listen(4000, () => {
-  console.log('Listen to port 4000...')
-})
+app.listen(4000, () => console.log("Listen to port 4000..."))
